@@ -23,6 +23,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.GenericXmlApplicationContext;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -36,7 +38,7 @@ public class UserDaoJunitFinal {
 	
 	@Autowired
 	ApplicationContext  context;
-	
+	@Autowired
 	private UserDao dao;
 	private User user01;
 	private User user02;
@@ -48,7 +50,6 @@ public class UserDaoJunitFinal {
 		user01=new User("j01_124","이상무01","1234");
 		user02=new User("j02_124","이상무02","1234");
 		user03=new User("j03_124","이상무03","1234");
-		dao = context.getBean("userDao", UserDao.class);
 		LOG.debug("==============================");
 		LOG.debug("=01 context="+context);
 		LOG.debug("=01 dao="+dao);
@@ -63,8 +64,24 @@ public class UserDaoJunitFinal {
 		LOG.debug("^^^^^^^^^^^^^^^^^^^^^^");		
 	}
 	
+	@Test(expected=DuplicateKeyException.class)
+	public void duplicatedKey() {
+		//org.springframework.dao.DuplicateKeyException
+		//ORA-00001: 무결성 제약 조건(HRSPRING.PK_USERS)에 위배됩니다
+		//-------------------------------------------
+		//삭제
+		//-------------------------------------------
+		dao.deleteUser(user01);
+		dao.deleteUser(user02);
+		dao.deleteUser(user03);
+		
+		dao.add(user01);
+		dao.add(user01);
+	}
+	
 	
 	@Test
+	@Ignore
 	public void getAll() throws SQLException {
 		//-------------------------------------------
 		//삭제
@@ -136,7 +153,6 @@ public class UserDaoJunitFinal {
 	public void addAndGet() {//2. public
 		//j01_ip: j01_124
 
-		try {
 			dao.deleteUser(user01);
 			dao.deleteUser(user02);
 			dao.deleteUser(user03);
@@ -168,13 +184,6 @@ public class UserDaoJunitFinal {
 			assertThat(userOne.getName(), is(user01.getName()));
 			assertThat(userOne.getPasswd(), is(user01.getPasswd()));
 
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 	
 }
